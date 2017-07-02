@@ -1,7 +1,3 @@
 [submodule "themes/ng5"]
 	path = themes/ng5
 	url = https://github.com/kwasmich/hexo-theme-ng5.git
-[submodule "themes/ng5.master"]
-	path = themes/ng5.master
-	url = https://github.com/kwasmich/hexo-theme-ng5.git
-	branch = master
