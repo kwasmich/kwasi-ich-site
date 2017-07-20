@@ -2,22 +2,23 @@
 layout: page
 title: Aqua for everyone
 author: Michael Kwaśnicki
-#photos: images/dummy2.png
-date: 2017-07-02 22:17:03
+date: 2009-09-10 00:00:00
+photos: aqua.png
 ---
-
-{% asset_img aqua.png - %}
-![](aqua.png)
 
 The Aqua user interface of Mac OS X has seen many imitations but none of them do it right. On many internet sites webmaster try to create user interfaces that try to look like Mac OS X or many Linux users install themes that barely remind on Mac OS X.  For all those who are interested in the Mac OS X user interface I've written a program which takes apart the complete Aqua user interface and delivers you all its graphics files. With those one can create user interfaces for the web like shown below.
 
-#### What you need ####
+
+
+## What you need ##
 
 * [ResCafé](http://gbsmith.freeshell.org/ResCafe/)
 * [Mac OS X](http://www.apple.com/macosx/) (10.4 or higher — possibly works also with prior versions)
 * my [pxm2tga](http://support.kwasi-ich.de/pxm2tga.zip) command line utility (10,7 KiB)
 
-#### How it is done ####
+
+
+## How it is done ##
 
 * At first you need to compile the command line tool pxm2tga yourself. Therefore you need to install the Xcode developer tools that ship with every copy of Mac OS X.
 * After unzipping ResCafé you will notice that this is a Java-Application which cannot be run by double clicking it. To run it you have to utilise Terminal and go into the ResCafé folder. Therefore launch Terminal, type

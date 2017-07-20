@@ -1,11 +1,12 @@
 {
-  "name": "hexo-site",
+  "name": "kwasi-ich-site",
   "version": "0.0.0",
   "private": true,
   "hexo": {
-    "version": "3.3.7"
+    "version": "3.3.8"
   },
   "dependencies": {
+    "gm": "^1.23.0",
     "hexo": "^3.2.0",
     "hexo-generator-archive": "^0.1.4",
     "hexo-generator-category": "^0.1.3",
