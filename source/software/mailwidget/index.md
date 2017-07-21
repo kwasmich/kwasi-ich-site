@@ -14,9 +14,64 @@ This widget for the Apple Dashboard announces the arrival of new mail. It is a d
 
 MailWidget is available for Dashboard for four years now and is still being improved constantly with commitment. If MailWidget is an indispensable Widget for you and you would like to express your esteem to me, the author, then consider whether you want to support this project with a small donation. However you decide, MailWidget remains free for everyone.
 
+<form action="https://www.paypal.com/cgi-bin/webscr" method="post">
+	<div class="center">
+		<input type="hidden" name="cmd" value="_donations">
+		<input type="hidden" name="business" value="DXJB8EFRAGYRE">
+		<input type="hidden" name="lc" id="countrySelector" value="US">
+		<input type="hidden" name="item_name" value="MailWidget">
+		<input type="hidden" name="item_number" value="Support future development">
+		<input type="hidden" name="currency_code" id="currencySelector" value="USD">
+		<!--select name="currency_code" id="currencySelector">
+			<option value="AUD">AUD</option>
+			<option value="CAD">CAD</option>
+			<option value="CHF">CHF</option>
+			<option value="CZK">CZK</option>
+			<option value="DKK">DKK</option>
+			<option value="EUR">EUR</option>
+			<option value="GBP">GBP</option>
+			<option value="HKD">HKD</option>
+			<option value="HUF">HUF</option>
+			<option value="ILS">ILS</option>
+			<option value="JPY">JPY</option>
+			<option value="MXN">MXN</option>
+			<option value="NOK">NOK</option>
+			<option value="NZD">NZD</option>
+			<option value="PHP">PHP</option>
+			<option value="PLN">PLN</option>
+			<option value="SEK">SEK</option>
+			<option value="SGD">SGD</option>
+			<option value="THB">THB</option>
+			<option value="TWD">TWD</option>
+			<option value="USD" selected="selected">USD</option>
+		</select-->
+		<input type="image" src="donate.png" name="submit" alt="PayPal - The safer, easier way to donate online!">
+		<img alt="" src="https://www.paypal.com/de_DE/i/scr/pixel.gif" width="1" height="1">
+	</div>
+</form>
+
 
 
 ## Download ##
+
+<ul class="list128">
+	<li>
+		<span>[![MailWidget](mailwidgeticon.png)](http://support.kwasi-ich.de/MailWidget361.zip)</span>
+		<div>
+			<h2>[MailWidget](http://support.kwasi-ich.de/MailWidget361.zip)</h2>
+			**Version: 3.61 (2015-01-19)**
+            <br />
+			**Size: 1.1 MiB**
+		</div>
+	</li>
+	<li>
+		<span>[![PDF](pdf.png)](http://support.kwasi-ich.de/MailWidgetManual.pdf)</span>
+		<div>
+			<h2>[Manual](http://support.kwasi-ich.de/MailWidgetManual.pdf)</h2>
+			**Size: 311.9 KiB**
+		</div>
+	</li>
+</ul>
 
 
 
