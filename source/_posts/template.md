@@ -1,11 +1,13 @@
 ---
-title: {{ title }}
+title: template
 author: xxx Kwaśnicki
-date: {{ date }}
-tags: [new, post]
+tags:
+  - new
+  - post
 photos:
     - image.png
     - /images/dummy2.png
+date: 2017-07-22 22:24:22
 ---
 
 Teaser…
