@@ -50,13 +50,9 @@ Actually this is also true for the naïve approach. But you can hardly get bette
     <a href="{% asset_path glnormalized.png %}">{% asset_img t_glnormalized.png %}</a>
     <a href="{% asset_path normalize.png %}">{% asset_img t_normalize.png %}</a>
     <a href="{% asset_path unnormalized.png %}">{% asset_img t_unnormalized.png %}</a>
-    [{% asset_img t_glnormalized.png %}][1]
-    [{% asset_img t_normalize.png %}](a{% asset_path normalize.png %}b)
-    [{% asset_img t_unnormalized.png %}]({% asset_path unnormalized.png %})
     <figcaption>Rendering of all possible normal directions as points on a sphere using an orthogonal projection with 6x super sampling. The naïve method (left) with relying on OpenGL's built in normalization. The naïve method (center) with calling normalize() in the vertex shader. The new approach (right).</figcaption>
 </figure>
 
-[1]: {% asset_path glnormalized.png %}
 
 ### Drawbacks ###
 
