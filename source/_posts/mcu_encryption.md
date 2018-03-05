@@ -1,7 +1,7 @@
 ---
 title: Strong encryption for small payloads on Arduino
 author: Michael Kwaśnicki
-date: 2018-02-25
+date: 2018-03-05
 tags: [Arduino, Encryption]
 photos: rc4d.svg
 ---
