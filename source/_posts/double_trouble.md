@@ -85,8 +85,17 @@ When the battery gets low the music is muted every few seconds and an annoying b
 
 The [other Bluetooth audio receiver][BT-Audio2] can play while charging, does have even less than half of the claimed playback time of 8h and is not that annoying when the battery is about to die.
 
-With both models I was able to connect to multiple Bluetooth host devices but only I stream was able to play at the time.
+With both models I was able to connect to multiple Bluetooth host devices but only one stream was able to play at the time.
 And in both cases I was unable to use the built-in microphone.
+
+
+
+Arduino Clone (WAVCAT)
+----------------------
+* Runs at 12Mhz instead of 16Mhz
+* Cannot flash bootloader
+* requires additional Arduino board drivers
+* not a drop in replacement
 
 
 
