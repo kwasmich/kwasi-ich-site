@@ -1,0 +1,76 @@
+latexit with 20pt 238 238 238
+
+Improved Bayer-Matrix
+
+The Bayer-Matrix describes a pattern for pixel distribution to achieve an ordered even distribution for reconstruction of images with lower depth than the original image. It is used in many DSLRs and other digital camera image sensors.
+
+The Bayer-Matrix has a small flaw in matrices that are power of two, which are the most used size. But that flaw shows up at matrices of 4x4 or higher. 2x2 matrices as used in most cameras cannot work around the issue described here and are therefore considered to be not flawed. So this flaws affects dithering in the first place.
+
+Those matrices can be constructed recursively using the following algorithm:
+
+D_{0}&=0 \\
+D_{n+1}&=\left[ \begin{array}{cc} 4\cdot D_{n} & 4\cdot D_{n}+2 \\ 4\cdot D_{n}+3 & 4\cdot D_{n}+1 \end{array} \right] \\
+
+D_{1}&=\left[ \begin{array}{cc}
+0 & 2 \\
+3 & 1
+\end{array} \right] \\
+D_{2}&=\left[ \begin{array}{cccc}
+0 & 8 & 2 & 10 \\
+12 & 4 & 14 & 6 \\
+3 & 11 & 1 & 9 \\
+15 & 7 & 13 & 5
+\end{array} \right] \\
+D_{3}&=\left[ \begin{array}{cccccccc}
+0	&	32	&	8	&	40	&	2	&	34	&	10	&	42 \\
+48	&	16	&	56	&	24	&	50	&	18	&	58	&	26  \\
+12	&	44	&	4	&	36	&	14	&	46	&	6	&	38  \\
+60	&	28	&	52	&	20	&	62	&	30	&	54	&	22  \\
+3	&	35	&	11	&	43	&	1	&	33	&	9	&	41  \\
+51	&	19	&	59	&	27	&	49	&	17	&	57	&	25  \\
+15	&	47	&	7	&	39	&	13	&	45	&	5	&	37  \\
+63	&	31	&	55	&	23	&	61	&	29	&	53	&	21  \\
+\end{array} \right]
+
+D_0     = 0
+D_{n+1} = ( 4*D_n      4*D_n + 2 )
+          ( 4*D_n + 3  4*D_n + 1 )
+
+The matrix can be rotated, mirrored and transposed without affecting the power of that algorithm.
+
+The primary use of that matrix is in ordered dithering. Imagine a grayscale image that has to be rendered on an Amazon Kindle (I actually don't own one but I like those kind of displays which has still space for improvement). As the Kindle has a monochrome display with only black and white one has to emulate gray by interleaving white and black pixels in a way such that the result looks gray with as few artifacts as possible. So it is desirable that while the threshold for the desired gray in this dithering algorithm ramps up, those pixels that appear are as far away from previously set pixels as possible.
+
+[Animation of ramping up grayscale with two-level example]
+
+Now the flaw of the Bayer-Matrix is that pixels that appear are adjacent and therefore not well distributed across the matrix. This happens when the threshold crosses the middle and also at the beginning and end. This only happens when we consider that an image is much larger than the matrix and we therefore wrap the matrix around the corners (which forms a torus when we see it mathematically). One can even see this in the matrices. In n=2 the entries 7 and 8 are adjacent as well as 0 and 15. in n = 3 those were 15 and 16 and also 0 and 63.
+
+[Image that shows the flaw]
+
+That flaw can be easily fixed by using another recursive algorithm. Instead of placing the previous matrix inside the new matrix, we spread the matrix and fill the spaces in an order that differs for odd and even iterations. For odd n the pattern is upper left, lower right, upper right, lower left. For even n we use a different pattern that that goes upper left, lower right, lower left, upper right. In each step we fill the gaps by increasing the initial value by 2^(2n-2).
+
+d_{ij}=\left[ \begin{array}{cc} d_{ij} & d_{ij} \\ d_{ij} & d_{ij} \end{array} \right]+2^{2n-2}\left[ \begin{array}{cc} 0 & 2 \\ 3 & 1 \end{array} \right]^{T^{n}}
+
+
+D_{1}&=\left[ \begin{array}{cc}
+0 & 2 \\
+3 & 1
+\end{array} \right] \\
+D_{2}&=\left[ \begin{array}{cccc}
+0	&	12	&	2	&	14 \\
+8	&	4	&	10	&	6  \\3	&	15	&	1	&	13  \\11	&	7	&	9	&	5  \\
+\end{array} \right] \\
+D_{3}&=\left[ \begin{array}{cccccccc}
+0	&	32	&	12	&	44	&	2	&	34	&	14	&	46 \\48	&	16	&	60	&	28	&	50	&	18	&	62	&	30  \\8	&	40	&	4	&	36	&	10	&	42	&	6	&	38  \\56	&	24	&	52	&	20	&	58	&	26	&	54	&	22  \\3	&	35	&	15	&	47	&	1	&	33	&	13	&	45  \\51	&	19	&	63	&	31	&	49	&	17	&	61	&	29  \\11	&	43	&	7	&	39	&	9	&	41	&	5	&	37  \\59	&	27	&	55	&	23	&	57	&	25	&	53	&	21  \\
+\end{array} \right]
+
+The pattern results in the constraint that the most far away pixel has to light up. If you start in a 2x2 matrix then the farthest away pixel is in the opposite corner keeping in mind that we wrap around the edges. Then there is an ambiguity for the next pixel because both are adjacent to the first two pixels. Instead of picking one and sticking to it as Bayer does, we switch between those patterns. That results in a matrix that has all the same properties but is free from those flaws and therefore more evenly distributed.
+
+[Image that shows the flawless matrix]
+
+
+[1]  Bayer, B.E., "An Optimum Method for Two-Level Rendition of Continuous
+     Tone Pictures," IEEE International Conference on Communications,
+     Conference Records, 1973, pp. 26-11 to 26-15.  
+
+          A short article proving the optimality of Bayer's pattern in the
+          dispersed-dot ordered dither.  
