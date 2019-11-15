@@ -56,7 +56,10 @@ MailWidget is available for Dashboard for four years now and is still being impr
 
 <ul class="list128">
 	<li>
-		<span>[![MailWidget](mailwidgeticon.png)](http://support.kwasi-ich.de/MailWidget361.zip)</span>
+		<span>
+
+[![MailWidget](mailwidgeticon.png)](http://support.kwasi-ich.de/MailWidget361.zip)
+</span>
 		<div>
 			<h2>[MailWidget](http://support.kwasi-ich.de/MailWidget361.zip)</h2>
 			**Version: 3.61 (2015-01-19)**

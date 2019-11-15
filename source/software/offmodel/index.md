@@ -62,7 +62,8 @@ Basically you just need to drop an instance of the OFF-Model Renderer Patch on y
 </dl>
 
 <figure>
-    ![](offmodelinput.png)
+
+![](offmodelinput.png)
 </figure>
 
 
@@ -72,5 +73,6 @@ Basically you just need to drop an instance of the OFF-Model Renderer Patch on y
 OFF (Object File Format) provides only geometry information and does not support texturing or material specifications. Therefore the OFF-Model Renderer also does not provide such features. To achieve some texturing and colouring effects you may want to combine the OFF-Model Renderer with the GLSL Shader patch. Sample compositions with the GLSL Shader patch are installed with the developer tools. Using GLSL Shader combined with the OFF-Model Renderer you can achieve even without support for texturing and material specifications stunning visualisations.
 
 <figure>
-    ![](glsltextured.jpeg)
+
+![](glsltextured.jpeg)
 </figure>

@@ -7,7 +7,10 @@ Sometimes I write programs for my purposes, like calculation, simulation, visual
 
 <ul class="list128">
 	<li>
-		<span>[![MailWidget](mailwidget/mailwidgeticon.png)](mailwidget/)</span>
+		<span>
+
+[![MailWidget](mailwidget/mailwidgeticon.png)](mailwidget/)
+</span>
 		<div>
 			<h2>[MailWidget](mailwidget/)</h2>
 			This is a widget for the Apple Dashboard which checks your Apple Mail accounts. It is written entirely in JavaScript.
