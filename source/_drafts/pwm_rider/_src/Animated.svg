@@ -1,0 +1,28 @@
+<?xml version="1.0"  encoding="iso-8859-1" standalone="no" ?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg viewBox="0 0 1000 1000"
+  xmlns="http://www.w3.org/2000/svg" version="1.1"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xml:lang="de">
+
+<rect x="-500" y="-500" width="2000" height="2000" fill="black" />
+
+<path d="M612.79 152.86L764.93 382.05L555.11 892.15L229 500Z"
+  fill="rgb(1,254,82)"
+  stroke="rgb(1,254,82)"
+  stroke-width="10"
+  stroke-linejoin="round">
+
+<animate attributeName="d"
+values="M612.79 152.86L764.93 382.05L555.11 892.15L229 500Z;
+M254.23 363.77L819.63 330.05L595.5 856.43L418.6 723.65Z;
+M749.93 571.67L242.79 648.5L267.55 297.93L625.59 339.25Z;
+M612.79 152.86L764.93 382.05L555.11 892.15L229 500Z"
+calcMode="discrete"
+begin="1s"
+dur="3s"
+repeatCount="indefinite"
+/>
+</path>
+</svg>

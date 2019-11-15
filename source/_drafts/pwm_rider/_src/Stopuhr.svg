@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg viewBox="0 0 300 100"
+  xmlns="http://www.w3.org/2000/svg" version="1.1"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xml:lang="de">
+
+<title>Stopuhr</title>
+<desc>
+Einfacher Prototyp einer digitalen Stopuhr.
+Bei diesem Beispiel ist nicht intensiv getestet
+worden, wie genau die Stopuhr ist, eignet sich
+also nicht für ernsthafte Anwendungen ohne weitere
+Tests und Genauigkeitsabschätzungen.
+
+Start und Stop kann mit verschiedenen Ereignissen
+erreicht werden: Klicken oder Aktivieren des
+entsprechenden Knopfes, beziehungsweise Verwendung
+der Taste b für Beginn/Start und e für Ende/Stop.
+Ebenfalls möglich ist die Verwendung des gelben Knopfes
+für beides: drücken für Start, loslassen für Stop.
+</desc>
+
+<defs>
+<!-- Zehn Zahlen für die Zähler... -->
+<text id="t0">0</text>
+<text id="t1">1</text>
+<text id="t2">2</text>
+<text id="t3">3</text>
+<text id="t4">4</text>
+<text id="t5">5</text>
+<text id="t6">6</text>
+<text id="t7">7</text>
+<text id="t8">8</text>
+<text id="t9">9</text>
+</defs>
+
+<rect x="-100" y="-500" width="500" height="1500" fill="#026" />
+<g transform="translate(100,50)" font-size="50" font-family="serif">
+
+<g id="Start">
+<title>Knopf zum Starten</title>
+<rect x="-50" y="10" width="100" height="30" fill="#060" rx="15" stroke="#068" />
+<text x="0" y="30" font-size="20" fill="#6fa" text-anchor="middle">Start</text>
+</g>
+<g id="Stop">
+<title>Knopf zum Stoppen</title>
+<rect x="55" y="10" width="100" height="30" fill="#600" rx="15" stroke="#608" />
+<text x="105" y="30" font-size="20" fill="#f6a" text-anchor="middle">Stop</text>
+</g>
+<g id="Knopf">
+<title>Knopf zum Starten und Stoppen (mousedown/mouseup)</title>
+<circle cx="-70" cy="25" r="15" fill="#fd0" stroke="#116" />
+<circle cx="-70" cy="25" r="12" fill="#ff0" stroke="#338" />
+<text x="-70" y="30" font-size="20" fill="#f6a" text-anchor="middle">?</text>
+</g>
+
+
+<g fill="#abf">
+<title>Die Stopuhr</title>
+<text>
+<tref x="-90" xlink:href="#t0">
+<title>Stunden</title>
+<animate
+	attributeName="xlink:href"
+        values="#t0;#t0;#t0;#t0;#t0;#t0;#t0;#t0;#t0;#t0;#t1;#t1;#t1;#t1;#t1;#t1;#t1;#t1;#t1;#t1;#t2;#t2;#t2;#t2"
+	keyTimes="0;0.0416667;0.0833333;0.125;0.1666667;0.2083333;0.25;
+	0.2916667;0.3333333;0.375;0.4166667;0.4583333;0.5;
+	0.5416667;0.5833333;0.625;0.6666667;0.7083333;0.75;
+	0.7916667;0.8333333;0.875;0.9166667;0.9583333"
+	dur="86400s"
+	begin="Start.click; Start.activate; accessKey(b);Knopf.mousedown"
+	end="Stop.click; Stop.activate; accessKey(e);Knopf.mouseup; indefinite"
+	calcMode="discrete"
+	repeatCount="indefinite"
+	fill="freeze" />
+</tref>
+
+<tref x="-60" xlink:href="#t0">
+<animate
+	attributeName="xlink:href"
+        values="#t0;#t1;#t2;#t3;#t4;#t5;#t6;#t7;#t8;#t9;#t0;#t1;#t2;#t3;#t4;#t5;#t6;#t7;#t8;#t9;#t0;#t1;#t2;#t3"
+	keyTimes="0;0.0416667;0.0833333;0.125;0.1666667;0.2083333;0.25;
+	0.2916667;0.3333333;0.375;0.4166667;0.4583333;0.5;
+	0.5416667;0.5833333;0.625;0.6666667;0.7083333;0.75;
+	0.7916667;0.8333333;0.875;0.9166667;0.9583333"
+	dur="86400s"
+	begin="Start.click; Start.activate; accessKey(b);Knopf.mousedown"
+	end="Stop.click; Stop.activate; accessKey(e);Knopf.mouseup; indefinite"
+	calcMode="discrete"
+	repeatCount="indefinite"
+	fill="freeze" />
+</tref>
+
+<tspan x="-30">:</tspan>
+<tref  x="-15" xlink:href="#t0">
+<title>Minuten</title>
+<animate
+	attributeName="xlink:href"
+        values="#t0;#t1;#t2;#t3;#t4;#t5"
+	keyTimes="0;0.1666667;0.3333333;0.5;0.6666667;0.8333333"
+	dur="3600s"
+	begin="Start.click; Start.activate; accessKey(b);Knopf.mousedown"
+	end="Stop.click; Stop.activate; accessKey(e);Knopf.mouseup; indefinite"
+	calcMode="discrete"
+	repeatCount="indefinite"
+	fill="freeze" />
+</tref>
+
+<tref x="15" xlink:href="#t0">
+<animate
+	attributeName="xlink:href"
+        values="#t0;#t1;#t2;#t3;#t4;#t5;#t6;#t7;#t8;#t9"
+	keyTimes="0;0.1;0.2;0.3;0.4;0.5;0.6;0.7;0.8;0.9"
+	dur="600s"
+	begin="Start.click; Start.activate; accessKey(b);Knopf.mousedown"
+	end="Stop.click; Stop.activate; accessKey(e);Knopf.mouseup; indefinite"
+	calcMode="discrete"
+	repeatCount="indefinite"
+	fill="freeze" />
+</tref>
+
+<tspan x="45">:</tspan>
+<tref x="60" xlink:href="#t0">
+<title>Sekunden</title>
+<animate
+	attributeName="xlink:href"
+        values="#t0;#t1;#t2;#t3;#t4;#t5"
+	keyTimes="0;0.1666667;0.3333333;0.5;0.6666667;0.8333333"
+	dur="60s"
+	begin="Start.click; Start.activate; accessKey(b);Knopf.mousedown"
+	end="Stop.click; Stop.activate; accessKey(e);Knopf.mouseup; indefinite"
+	calcMode="discrete"
+	repeatCount="indefinite"
+	fill="freeze" />
+</tref>
+
+<tref x="90" xlink:href="#t0">
+<animate
+	attributeName="xlink:href"
+        values="#t0;#t1;#t2;#t3;#t4;#t5;#t6;#t7;#t8;#t9"
+	keyTimes="0;0.1;0.2;0.3;0.4;0.5;0.6;0.7;0.8;0.9"
+	dur="10s"
+	begin="Start.click; Start.activate; accessKey(b);Knopf.mousedown"
+	end="Stop.click; Stop.activate; accessKey(e);Knopf.mouseup; indefinite"
+	calcMode="discrete"
+	repeatCount="indefinite"
+	fill="freeze" />
+</tref>
+
+<tspan  x="115">.</tspan>
+<tref x="125" xlink:href="#t0">
+<title>Sekundenbruchteile</title>
+<animate
+	attributeName="xlink:href"
+        values="#t0;#t1;#t2;#t3;#t4;#t5;#t6;#t7;#t8;#t9"
+	keyTimes="0;0.1;0.2;0.3;0.4;0.5;0.6;0.7;0.8;0.9"
+	dur="1s"
+	begin="Start.click; Start.activate; accessKey(b);Knopf.mousedown"
+	end="Stop.click; Stop.activate; accessKey(e);Knopf.mouseup; indefinite"
+	calcMode="discrete"
+	repeatCount="indefinite"
+	fill="freeze" />
+</tref>
+
+<tref x="155" xlink:href="#t0">
+<animate
+	attributeName="xlink:href"
+        values="#t0;#t1;#t2;#t3;#t4;#t5;#t6;#t7;#t8;#t9"
+	keyTimes="0;0.1;0.2;0.3;0.4;0.5;0.6;0.7;0.8;0.9"
+	dur="0.1s"
+	begin="Start.click; Start.activate; accessKey(b);Knopf.mousedown"
+	end="Stop.click; Stop.activate; accessKey(e);Knopf.mouseup; indefinite"
+	calcMode="discrete"
+	repeatCount="indefinite"
+	fill="freeze" />
+</tref>
+</text>
+
+</g>
+
+</g>
+</svg>

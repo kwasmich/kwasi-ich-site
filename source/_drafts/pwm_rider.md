@@ -1,124 +1,178 @@
 ---
 title: Ride the PWM
 author: Michael Kwaśnicki
-date: {{ date }}
-tags: [new, post]
-photos:
-    - image.png
-    - /images/dummy2.png
+date: 2019-11-15
+tags: [Arduino, NeoPixel, PWM]
+photos: surf_lem.svg
 ---
 
-An alternative approach to drive WS2811 LEDs with an 8MHz AVR.
+Driving NeoPixel LEDs (and compatibles) with 800kHz on 8MHz AVR microcontrollers is a challenge.
+Here I present an alternative approach to bit banging.
+By using the PWM hardware it is more versatile than previous solutions and can be used for other purposes as well.
 
 
 <!-- more -->
 
 
+
 ## What ##
 
-Driving WS2811 LEDs (also known as NeoPixel) at 800kHz with an AVR microcontroller at only 8MHz is a challenge.
-But it has been done before by [Just in Time][1] and also the [Adafruit NeoPixel library for Arduino][2] supports ATmega and ATtiny devices with 8MHz.
-Those implementations have in common that they drive the LEDs through bit banging.
-They are also both written in assembly because of the tight timing of only 10 clock cycles for each bit to be transmitted.
+Driving WS2811 LEDs (also known as NeoPixel) at 800kHz with AVR microcontrollers with no additional hardware has been done before by [Just in Time][1].
+Also the [Adafruit NeoPixel library for Arduino][2] supports ATmega and ATtiny devices at 8MHz.
+Those implementations have in common that they transmit the control signal through bit banging.
+They are also both written in AVR assembly because of the tight timing of only 10 clock cycles for each bit to be transmitted.
 
-Now I wanted to try a different approach and leverage the PWM hardware feature of shaping signals.
+Now I want to try a different approach and leverage the PWM hardware feature for shaping signals.
 
 
 
 ## Why ##
 
-First of all I wanted to drive WS2811 LEDs at 800kHz with an ATmega328p that is using just its internal clock and no external crystal oscillator.
-Because of the tight timing it was a necessity to learn AVR assembler, which I wanted to do for a long time but had no real excuse to do so until now.
+First of all I want to drive WS2811 LEDs at 800kHz with an ATmega328P that is using just its internal clock and no external crystal oscillator.
+Because of the tight timing it is a necessity to learn AVR assembler, which I wanted to do for a long time but had no real excuse to do so until now.
 By using hardware capabilities this approach is more flexible than bit banging.
 The generated waveform can be altered easily.
-This might become handy because the timing for 0-bit and 1-bit differ between [WS2811][8] (the timing shows the 400kHz communication - so has to be halved), [WS2812][9], [WS2812B][A], [APA104][B] (the timings don't match the claimed 800kHz and also the addition TH+TL doesn't add up), [APA106][C] (the timings don't match the claimed 800kHz), [PL9823][D] (the timings don't match the claimed 800kHz) and [SK6812][E] with its variant [SK6812-RGBW][F].
+This might become handy because the timing for 0-bit and 1-bit differ between various addressable LEDs:
 
-You just have to set the duty cycle once per bit and the timer used in fast PWM mode does the shaping of the output waveform.
-This allows to use different bit timings in each transmission.
+* [WS2811][8] (the timing shows the 400kHz communication - so has to be halved)
+* [WS2812][9]
+* [WS2812B][A]
+* [APA104][B] (the timings don't match the claimed 800kHz and also the addition TH+TL doesn't add up)
+* [APA106][C] (the timings don't match the claimed 800kHz)
+* [PL9823][D] (the timings don't match the claimed 800kHz)
+* [SK6812][E]
+* [SK6812-RGBW][F]
 
-!!!! BILD: verschiedene duty cycles mit nur ein mal setzen
+You just have to set the duty cycle once per bit and the timer used in Fast PWM Mode does the shaping of the output waveform.
+This enables the use of different bit timings for each transmission.
 
-In contrast you have to bit bang the pin twice per bit when using the other approach.
+<figure>
+    {% asset_img duty_pwm.svg %}
+    <figcaption>Different duty cycles can be achieved with the same AVR assembly</figcaption>
+</figure>
 
-!!!! BILD: verschiedene duty cycles mit zwei mal setzen.
+In contrast you have to bit bang the pin twice per bit when using the old approach.
+And you will need completely different AVR assembler code for different timings.
+
+<figure>
+    {% asset_img duty_bang.svg %}
+    <figcaption>Different duty cycle require a realignment of the AVR assembly</figcaption>
+</figure>
 
 
 
 ## How ##
 
-The basic idea is to start the a PWM signal in fast PWM mode and run assembly code in parallel and synchronously.
+The basic idea is to start a PWM signal in Fast PWM Mode and run AVR assembly code in parallel and synchronously.
 
 For development I used an Arduino Uno with 16MHz crystal oscillator where I set the clock prescaler to a "clock division factor" of 16.
 
-```
-				            // timed sequence:
-	CLKPR = _BV(CLKPCE);	// enable clock prescaler changes
-	CLKPR = _BV(CLKPS2);	// set clock prescaler
+``` c
+                            // only for development purpose set clock speed to 1MHz
+                            // timed sequence:
+    CLKPR = _BV(CLKPCE);    // enable clock prescaler changes
+    CLKPR = _BV(CLKPS2);    // set clock prescaler
 ```
 
-This way it was much easier to measure timings and count clock cycles as one clock cycle corresponds to 1µs instead of 125ns at 8MHz.
-Also it does not matter at which speed the you are developing as long as you stay within 10 clock cycles to get the timings right.
+This way it is much easier to measure timings and count clock cycles as one clock cycle corresponds to 1µs instead of 125ns at 8MHz.
+Also it does not matter at which speed you are developing as long as you stay within 10 clock cycles to get the timings right.
+You just need to remember to set the right clock speed when trying to actually control the LEDs.
 
-I used Timer/Counter0 as I have no other code it might interfere with.
-If you are using other Arduino libraries or built in timing functions like `delay()`, you may want to use a different Timer/Counter.
-To set it to fast PWM the Timer/Counter Control Register A needs to be set accordingly:
+There are a few things to consider before we can start.
+Most important is the selection of the Timer/Counter (TC).
+Only Timer/Counter0 (TC0) can be accessed in one (1) cycle via I/O-Registers by using `OUT`.
+But all TCs can be accessed in two (2) cycles via SFR (memory mapped Special Function Registers) by using `STS`.
 
+| Timer/Counter |        Pins         |            Access Time          |             Conflicts             |
+|--------------:|--------------------:|--------------------------------:|:---------------------------------:|
+|       0       |        5 (PD5)      | 1 cycle (OUT) or 2 cycles (STS) |  Arduino `delay()` and `millis()` |
+|       1       | 9 (PB1) or 10 (PB2) |                  2 cycles (STS) |                *)                 |
+|       2       |        3 (PD3)      |                  2 cycles (STS) |                *)                 |
+
+*): Conflict with third party libraries possible
+
+I use TC2 as I have no other code it might interfere with.
+If you are using other Arduino libraries that also use TC2, you may want to make sure it is okay or use a different TC instead.  
+The TC is used only during transmission and can be used freely otherwise.  
+Using the 16-bit TC1 is a bit of waste as we are only going to count 10 clock cycles.  
+Using TC0 will interfere with the [Arduino built-in functions][G] like `millis()` and `delay()`.
+
+To set TC2 to Fast PWM Mode with TOP set to `OCR2A`, the Timer/Counter Control Register (`TCCR2`) needs to be set accordingly:
+
+``` c
+    DDRD   = _BV(PD3);                                  // set pin 3 as output (PD3)
+    TCCR2A = _BV(COM2B1) | _BV(WGM21) | _BV(WGM20);     // enable Fast PWM Mode on pin 3 (OC2B)
+    TCCR2B = _BV(WGM22);
 ```
-	TCCR0A = _BV(COM0B1) | _BV(WGM01) |  _BV(WGM00);
-```
+
 The desired frequency is 800kHz.
-At 8MHz cpu clock this means that we need a PWM period of 10 clock cycles.
-In fast PWM the Output Compare Register A sets the period.
-It counts from 0 to OCR0A inclusive.
-For 10 clock cycles we need 0…9 so we set OCR0A accordingly.
+At 8MHz cpu clock speed this means that we need a PWM period of 10 clock cycles.
+In Fast PWM Mode the Output Compare Register A sets the period.
+It counts from 0 to `OCR2A` inclusive.
+For 10 clock cycles we need 0…9 so we set `OCR2A` accordingly.
+
+``` c
+    OCR2A = 9;  // set TOP for Fast PWM MODE and only count from 0 to 9 (10 clock cycles)
 ```
-	OCR0A = 9
-``` 
-The the duty cycle is controlled with Output Compare Register B.
-??Where a duty cycle of 0 corresponds to a duty cycle of 1/10 (1µs).??
+
+The duty cycle is controlled with Output Compare Register B (`OCR2B`).
+A value of 0 corresponds to a duty cycle of 1/10 (1µs), while value of 9 corresponds to a duty cycle of 10/10 (always high).
+
+``` c
+    OCR2B = x;  // x = 0...9 the duty cycle (duty = (OCR2B + 1) / OCR2A)
 ```
-	OCR0B = x; // x = 0...9 ?
-```
-Because fast PWM uses both Output Compare Registers only one pin can be used.
-Most Arduino tutorials get this wrong but I found one that describes it well called [Fast PWM on ATmega328, up to 8MHz][5]
+
+Since Fast PWM Mode uses both Output Compare Registers, only one pin can be used.
+Most Arduino tutorials get this wrong but I found one that describes it well, called [Fast PWM on ATmega328, up to 8MHz][5].
+This applies also for TC0 where you also can only use the PWM pin labelled OC0B.
+TC1 is different.
+The same limitation applies when using `OCR1A` as TOP.
+But when using `ICR1` as TOP, both output pins OC1A and OC1B can be selected.
 
 
 
+## Hands on ##
 
 Now comes the fun part.
-To shape the waveform with the data that we want to transmit we need assembly code that runs in sync with the Timer/Counter 0.
-
+To shape the waveform with the data that we want to transmit, we need AVR assembly code that runs in sync with the TC2.  
 There are four parts to consider:
 
-1. How to start the transmission and transition into 2.
+1. How to start the transmission and transition to step 2.
 2. Transmit each bit in a byte.
-3. Load the next byte and transition into 2.
-4. Stop the timer at the end of all bytes.
+3. Load the next byte and transition to step 2 or step 4.
+4. Stop the timer at the end.
+
 
 
 ### Entry ###
 
-The waveform is produced the next clock cycle as soon as we start the Timer/Counter by setting the Clock Select Bit in Timer/Counter Control Register B.
+The waveform is generated the next clock cycle as soon as we start the TC2 by setting the Clock Select Bit in `TCCRB`.
 If we set the duty cycle after that, we are already off by one clock cycle.
 So we have to set the duty cycle for the first bit prior to starting the clock.
 Before that we also need to load the first byte and look at the first bit.
-Luckily there is an instruction to load a byte from memory into a register and also advance the pointer to the memory location at once.
-There is no need to advance the memory pointer by hand.
+Luckily there is an instruction to load a byte from memory into a register and also post-increment the pointer to the next memory location at once.
+There is no need to move the memory pointer by hand.
 To look at the first bit (and any successive bit) the easiest way is to move the highest bit into the carry flag of the Status Register (SREG).
 With the bit sitting in the carry flag you can use the conditional branching instructions.
 So the entry sequence is this:
+
+``` avrasm
+    LDI %[lo], 1                ; (constant) store the duty cycle for 0-bit in register lo
+    LDI %[hi], 7                ; (constant) store the duty cycle for 1-bit in register hi
+    LDI %[start], 0x9           ; (constant) store the selected clock source in register start
+                                ;            (That is _BV(WGM22) | _BV(CS20))
+    LDI %[stop], 0x0            ; (constant) store no clock source in register stop
+    LDI %[bytes], 0x??          ; the number of bytes remaining
+    LDI %[bits], 0x7            ; the number of bits remaining
+    LD  %[byte], %a[dataptr]+   ; load first byte and post-increment pointer
+    LSL %[byte]                 ; shift the highest bit into the carry flag
+    XXX                         ; do something according to the carry flag
+    STS %[OCR2B], %[(lo|hi)]    ; set the Output Control Register B to the desired duty cycle
+    STS %[TCCR2B], %[start]     ; start the timer by setting the Timer/Counter Control Register B
 ```
-	LDI %[lo], 1			; store the duty cycle for 0-bit in register lo
-	LDI %[hi], 7			; store the duty cycle for 1-bit in register hi
-	LDI %[start], 0x9		; store the selected clock source in register start
-	LDI %[stop], 0x0		; store no clock source in register stop
-	LD  %[byte], %a[ptr]+		; load first byte and advance pointer
-	LSL %[byte]			; shift the highest bit into the carry flag
-	XXX				; do something according to the carry flag
-	OUT %[OCR0B], %[(lo|hi)]	; set the Output Control Register B to the desired duty cycle
-	OUT %[TCCR0B], %[start]	; start the timer by setting the Timer/Counter Control Register B
-```
-We don't need to count clock cycles until we start the Timer/Counter.
+
+I use named registers here to let the compiler decide which register to use for each variable.
+We don't need to count clock cycles until we start the TC2.
 At the last line we start counting the used clock cycles.
 In good tradition we use zero based counting.
 
@@ -127,203 +181,303 @@ In good tradition we use zero based counting.
 
 Now we have 9 clock cycles to prepare the next bit.
 In that time we have just to shift in the next bit into the carry flag and set the duty cycle accordingly.
+
+``` avrasm
+    LSL %[byte]                 ; shift the next bit into the carry flag
+    XXX                         ; do something according to the carry flag
+    STS %[OCR2B], %[(lo|hi)]    ; set the Output Control Register B to the desired duty cycle
 ```
-	LSL %[byte]			; shift the next bit into the carry flag
-	XXX				; do something according to the carry flag
-	OUT %[OCR0B], %[(lo|hi)]	; set the Output Control Register B to the desired duty cycle
-```
+
 Now we have to think about how we can choose the right duty cycle.
-One possibility would be to use another register and store the duty cycle there and use it then.
-```
-next_bit:
-	LSL %[byte]			; shift the next bit into the carry flag
-	BRCS bit_n_one			; look at the carry flag and jump to bit_n_one if it is set
-	MOV %[duty] %[lo]		; copy the lo register
-	RJMP set_duty			; go to set duty cycle
-	
-bit_n_one:
-	MOV %[duty] %[hi]		; copy the hi register
+One possibility would be to use another register and store the duty cycle there and use it from that.
+But that would waste one clock cycle.
+Because we have to account for different duty cycles we have to branch anyway.
+So instead of using the branch to copy a register with `MOV`, we can just branch to different `STS` instructions
 
-set_duty:
-	OUT %[OCR0B], %[duty]		; set the Output Control Register B to the desired duty cycle
+``` avrasm
+    bit:        LSL  %[byte]            ; shift the next bit into the carry flag
+                BRCS bit_1              ; look at the carry flag and jump to bit_1 if it is set
+                NOP                     ; keep both branches in sync
+
+    bit_0:      STS  %[OCR2B], %[lo]    ; set the `OCR2B` to the desired duty cycle
+                RJMP next_bit           ; process the next bit
+
+    bit_1:      STS  %[OCR2B], %[hi]    ; set the `OCR2B` to the desired duty cycle
+                RJMP next_bit           ; process the next bit
 ```
-Not every instruction takes one clock cycle.
+
+One thing to consider when writing AVR assembly is the clock count for each instruction.
+AVR microcontrollers are extremely efficient and execute most instructions in just one clock cycle, given the values are already in one of the general purpose registers.
 For this [ATmega328P megaAVR Data Sheet][3] and [AVR Instruction Set Manual][4] are the source of truth.
-Noteworthy is that branch and jump instructions use 1 clock cycle if the jump is not made and 2 clock cycles otherwise.
+Noteworthy is that branch instructions use 1 clock cycle if the jump is not made and 2 clock cycles otherwise.
+Since we need to set the duty cycle at a specific clock cycle, it is easiest to start with the `STS` instruction (which is clock cycle 9 and 0) and count backwards from there.
 So the cycle counting looks like this:
-```
-					; 1-bit	0-bit clock cycle
-bit_n:
-	XXX				; 1…4	1…4
-	LSL %[byte]			; 5	5
-	BRCS bit_n_one			; 6/7	6
-	MOV %[duty] %[lo]		; 	7
-	RJMP set_duty			; 	8/9
-	
-bit_n_one:
-	NOP				; 8
-	MOV %[duty] %[hi]		; 9
 
-set_duty:
-	OUT %[OCR0B], %[duty]		; 0	0
+``` avrasm
+                                        ;    clock cycle
+                                        ;   1-bit   0-bit
+    bit:        XXX                     ;   3…5     3…5
+                LSL  %[byte]            ;   6       6
+                BRCS bit_1              ;   7/8     7
+                NOP                     ;           8
+
+    bit_0:      STS  %[OCR2B], %[lo]    ;           9/0
+                RJMP next_bit           ;           1/2
+
+    bit_1:      STS  %[OCR2B], %[hi]    ;   9/0
+                RJMP next_bit           ;   1/2
 ```
-We see that 6 clock cycles are required to set the duty cycle depending on the bit value.
+
+We see that 7 clock cycles are required to set the duty cycle depending on the bit value.
 To stay in sync one case has to be delayed by one clock cycle with a NOP.
-So we have 4 clock cycles spare in each bit.
-Instead of wasting those cycles we can use it to count down the bits, loop over that section and jump out for for fetching the next byte.
+So we have 3 clock cycles spare in each bit.
+Instead of wasting those cycles we can use it to count down the bits, loop over that section and jump out for fetching the next byte.
+
+``` avrasm
+                                        ;    clock cycle
+                                        ;   1-bit   0-bit
+                LDI  %[bits], 0x7                           ; set the bit counter to 7 (count down from 7 to 0)
+
+    next_bit:   NOP                     ;   3       3       ; fill that one missing clock cycle
+                LSL  %[byte]            ;   4       4       ; shift the next bit into the carry flag
+                DEC  %[bits]            ;   5       5       ; decrement the bit count
+                BREQ next_byte          ;   6       6       ; jump to next_byte section if the counter reaches zero
+                BRCS bit_1              ;   7/8     7       ; look at the carry flag and jump to bit_n_one if it is set
+                NOP                     ;           8       ; synchronize both cases
+
+    bit_0:      STS  %[OCR2B], %[lo]    ;           9/0     ; set the duty cycle to lo
+                RJMP next_bit           ;           1/2     ; process the next bit
+
+    bit_1:      STS  %[OCR2B], %[hi]    ;   9/0             ; set the duty cycle to hi
+                RJMP next_bit           ;   1/2             ; process the next bit
+
+    next_byte:
 ```
-	LDI %[bits], 0x8				; set the bit counter to 8
 
-bit_n:
-	DEC %[bits]			; 3	3	; decrement the bits
-	BREQ next_byte			; 4	4	; jump not next byte section if the counter reaches zero
-	LSL %[byte]			; 5	5	; shift the next bit into the carry flag
-	BRCS bit_n_one			; 6	6/7	; look at the carry flag and jump to bit_n_one if it is set
-	MOV %[duty] %[lo]		; 7		; copy the lo register
-	RJMP set_duty			; 8/9		; go to set duty cycle
-
-bit_n_one:
-	NOP				;	8	; synchronize both cases
-	MOV %[duty] %[hi]		;	9	;copy the hi register
-
-set_duty:
-	OUT %[OCR0B], %[duty]		; 0	0	; set the Output Control Register B to the desired duty cycle
-	RJMP bit_n			; 1/2	1/2	; process the next bit
-
-next_byte:
-```
-Great, we can process each bit in a byte with a loop and waste to cycles.
+Notice that we make use of the fact that `DEC` does not alter the carry flag set by `LSL`.
+Great, we can process each bit in a byte with a loop and waste only one (1) cycle.
 
 
 ### Fetch next byte ###
 
 This is the tricky part.
-While bit 8 is being processed, we have to decrement the size and see if we are done, load the next byte if not so, set the bit counter back to 7 and set the duty cycle to the right value and stay in sync.
+While bit 8 is being processed, we have to decrement the byte count and see if we are done. If not so, load the next byte, set the bit counter back to 7 and set the duty cycle to the right value while staying in sync.
 Easy, huh?
 Let's look at the required instructions and the clock cycles:
+
+``` avrasm
+    next_byte:  DEC  %[bytes]           ;   1       1       ; decrement the count of bytes to process
+                BREQ end                ;   2       2       ; jump to the end if the size reaches zero
+                LDI  %[bits], 0x7       ;   3       5       ; set the bit counter back to 7
+                LD   %[byte], %a[ptr]+  ;   4/5     4/5     ; load the next byte
+                LSL  %[byte]            ;   6       6       ; shift the next bit into the carry flag
+                BRCS bit8_1             ;   7       7/8     ; branch to the hi-bit case if carry is set
+                NOP                     ;   8               ; keep both branches in sync
+
+    bit8_0:     STS  %[OCR2B], %[lo]    ;   9/0             ; set the duty cycle to lo
+                RJMP next_bit           ;   1/2             ; process the next bit
+
+    bit8_1:     STS  %[OCR2B], %[hi]    ;           9/0     ; set the duty cycle to hi
+                RJMP next_bit           ;           1/2     ; process the next bit
+
+    end:
 ```
-set_duty:
 
-next_byte:
-	DEC %[size]		; 1	1	; decrement the count of bytes to process
-	BREQ end		; 2	2	; jump to the end if the size reaches zero 2, else 1
-	LD %[byte]		; 3/4	3/4	; load the next byte
-	LDI %[bits], 0x8	; 5	5	; set the bit counter back to 8
-	LSL %[byte]		; 6	6	; shift the next bit into the carry flag
-	BRCS bit_hi		; 7	7/8	; branch to the hi-bit case
-	MOV %[duty] %[lo]	; 8		; copy the lo register
-	RJMP set_duty		; 9/10		; go to set duty cycle
+Well, no.
+We didn't take into account that we enter `next_byte` at clock cycle 7.
+This is the busiest part of the whole loop of byte processing.
+We have to get into this part as quick as possible and not as late as clock cycle 7.
+There is no way to do all necessary work during the last bit, if we have to jump into this section.
+We are two clock cycles short.
+(Some AVR microcontrollers have an internal clock of 9.6 MHz. There we have 12 clock cycles to reach the 800kHz goal - what a perfect match!)  
+We have to split the work across bit 8 and the first bit of the next byte.
+Processing the first bit of the next byte is almost exactly the same as the entry.
+The only difference is that we do not have to start TC2 as it is already running.
 
-bit_hi:	
-	MOV %[duty] %[lo]	; 	9	; copy the lo register
-	RJMP set_duty		; 	10/11	; go to set duty cycle
+``` avrasm
+    next_byte:  LDI  %[bits], 0x7       ;   3       3       ; set the bit counter back to 7
+                LD   %[byte], %a[ptr]+  ;   4/5     4/5     ; load the next byte
+                LSL  %[byte]            ;   6       6       ; shift the next bit into the carry flag
+                BRCS byte_1             ;   7       7/8     ; branch to the hi-bit case if carry is set
+                NOP                     ;   8               ; keep both branches in sync
 
-end:
+    byte_0:     STS  %[OCR2B], %[lo]    ;   9/0             ; set the duty cycle to lo
+                RJMP next_bit           ;   1/2             ; process the next bit
+
+    byte_1:     STS  %[OCR2B], %[hi]    ;           9/0     ; set the duty cycle to hi
+                RJMP next_bit           ;           1/2     ; process the next bit
 ```
-Well, no. We are off-by-one in the case that ne first bit of the next byte is a zero.
-And even off-by-two in case of a one-bit.
-And we didn't even take into account that we enter `next_byte` at clock cycle 6.
-The solution I came up with also uses the clock cycles were used to prepare bit 8 and while presenting bit 8 to the output.
+
+Those instructions fit into 8 clock cycles.
+This is perfect, because we can jump into this section (which takes 2 clock cycles).
+Jumps taken are expensive, jumps not taken are cheap.
+The solution I came up with is to always jump into the part for bit 8 but leave it in case we are not processing the last bit.
+
+``` avrasm
+    nextbit:    LSL %[byte]             ; shift the next bit into the carry flag
+                DEC %[bits]             ; decrement the bit count
+                BRNE bit                ; jump to processing of bit 2…7
+                DEC %[bytes]            ; decrement the count of bytes to process
+                BRCS last_1             ; branch to the hi-bit case if carry is set
+                NOP                     ; keep both branches in sync
+
+    last_0:     STS %[OCR2B], %[lo]     ; set the duty cycle to lo
+                BRNE nextbyte           ; process the next byte if the count of bytes is not zero
+                RJMP end                ; jump to the end otherwise
+
+    last_1:     STS %[OCR2B], %[hi]     ; set the duty cycle to hi
+                BRNE nextbyte           ; process the next byte if the count of bytes is not zero
+                RJMP end                ; jump to the end otherwise
+
+    bit:        BRCS bit_1              ; branch to the hi-bit case if carry is set
+                NOP                     ; keep both branches in sync
+
+    bit_0:      STS %[OCR2B], %[lo]     ; set the duty cycle to lo
+                RJMP nextbit            ; process the next bit
+
+    bit_1:      STS %[OCR2B], %[hi]     ; set the duty cycle to hi
+                RJMP nextbit            ; process the next bit
+
+    nextbyte:   LDI %[bits], 0x7        ; reset the bit count to 7
+                LD  %[byte], %a[ptr]+   ; load the next byte
+                LSL %[byte]             ; shift the next bit into the carry flag
+                BRCS byte_1             ; branch to the hi-bit case if carry is set
+                NOP                     ; keep both branches in sync
+
+    byte_0:     STS %[OCR2B], %[lo]     ; set the duty cycle to lo
+                RJMP nextbit            ; process the next bit
+
+    byte_1:     STS %[OCR2B], %[hi]     ; set the duty cycle to hi
+                RJMP nextbit            ; process the next bit
+
+    end:
 ```
-	LDI %[bits], 0x7
 
-bit_n:
-	DEC %[bits]
-	BREQ bit_8
-	LSL %[byte]
-	BRCS bit_n_one	
-	MOV %[duty] %[lo]
-	RJMP set_duty	
+This time I intentionally omit the clock cycle count and make it an exercise for the reader.
+And again we make multiple times use of the fact that `DEC` does not alter the carry flag set by `LSL`.
 
-bit_n_one:
-	NOP			
-	MOV %[duty] %[hi]
-
-set_duty:
-	OUT %[OCR0B], %[duty]
-	RJMP bit_n
-
-bit8:
-	LDI %[bits], 0x7
-	LSL %[byte]
-	BRCS bit8_one
-	NOP
-
-bit8_zero:
-	OUT %[OCR0B], %[lo]
-	DEC %[size]
-	BREQ end
-	LD %[byte]
-	LSL %[byte]
-	BRCS bit_n_one
-	MOV %[duty] %[lo]
-	RJMP set_duty	
-
-bit8_one:	
-	OUT %[OCR0B], %[hi]
-	DEC %[size]
-	BREQ end
-	LD %[byte]
-	LSL %[byte]
-	BRCS bit_n_one
-	MOV %[duty] %[lo]
-	RJMP set_duty	
-
-end:
-```
-This time I intentionally omitted the clock cycle count and make it an exercise for the reader.
-Now that works but I don't like that OUT %[OCR0B] is sometimes set by the %[duty] register and sometimes directly with the %[hi] and %[lo] registers.
-Also there is much code duplication because I could not afford a branch or jump instruction.
-But we will clean that up afterwards.
-Note that the %[bits] now only counts 7 bits.
+There is still room for optimization as the sections labelled `bit_0` and `bit_1` are identical to those labelled `byte_0` and `byte_1`.
+Also the `bit` section is identical to a subset of `nextbyte`.
+This gives us the opportunity to reduce the code size by 6 instructions (12 bytes) and all we have to do is move the `bit` label to the end of the `nextbyte` section.
 
 
 ### End of sequence ###
 
 Here is not much work to do.
-You just have to wait until the clock count reaches 9 and then you stop the timer.
+You just have to wait until the clock count reaches 8 and then you stop the timer.
+
+``` avrasm
+    end:        RJMP .+0                ;   4/5     ; same as NOP NOP
+                RJMP .+0                ;   6/7     ; same as NOP NOP
+                NOP                     ;   8
+                STS  %[TCCR2B], %[stop] ;   9/0
 ```
-end:
-	RJMP .+0    		; NOP NOP
-	RJMP .+0    		; NOP NOP
-	RJMP .+0    		; NOP NOP
-	OUT %[TCCR0B], %[stop]	; stop the timer by setting the Timer/Counter Control Register B
-```
-Here we are using a cheat to delay two clock cycles but use only one instruction and thus save some bytes of program space.
+
+We enter this section at clock cycle 4, so we have to wait 5 more clock cycles before we have to stop TC2 and end the sequence.
+Here we use a trick to delay two (2) clock cycles but use only one instruction and thus save some bytes of program space.
+`RJMP` does a jump relative to the address of the next instruction, thus moving forward to the next instruction in two (2) clock cycles instead of one (1) as the jump is executed unconditionally.
+With a zero (0) as its argument you will just land on that next instruction.
+(`RJMP .-2` does an infinite loop.)
 
 
 
 ## Final result ##
 
+In the end the combined assembly code looks like this:
+
+``` avrasm
+                ; assuming all input and constant values are declared and set before
+    start:      LDI  %[bits], 0x7
+                LD   %[byte], %a[ptr]+
+                LSL  %[byte]
+                BRCS start_1
+    start_0:    STS  %[OCR2B], %[lo]
+                STS  %[TCCR2B], %[start]
+                RJMP nextbit
+    start_1:    STS  %[OCR2B], %[hi]
+                STS  %[TCCR2B], %[start]
+                RJMP nextbit
+    nextbyte:   LDI  %[bits], 0x7
+                LD   %[byte], %a[ptr]+
+                LSL  %[byte]
+    bit:        BRCS bit_1
+                NOP
+    bit_0:      STS  %[OCR2B], %[lo]
+                RJMP nextbit
+    bit_1:      STS  %[OCR2B], %[hi]
+                RJMP nextbit
+    nextbit:    LSL  %[byte]
+                DEC  %[bits]
+                BRNE bit
+                DEC  %[bytes]
+                BRCS last_1
+                NOP
+    last_0:     STS  %[OCR2B], %[lo]
+                BRNE nextbyte
+                RJMP end
+    last_1:     STS  %[OCR2B], %[hi]
+                BRNE nextbyte
+                RJMP end
+    end:        RJMP .+0
+                RJMP .+0
+                NOP
+                STS  %[TCCR2B], %[start]
+```
+
+Just wonderful.
+35 AVR assembly instructions and not a single clock cycle wasted.
+Even I can hardly imagine this, but I bet experienced AVR assembly programmers can do this even tighter.
 
 
+### But there is more… ###
+
+Setting the timings for 0-bits and 1-bits individually for each transmission is not enough.
+Instead of changing the duty cycle for each bit, we can invert the waveform instead and thus generate [Manchester code][H] at the same rate.
+How cool is that!
+
+<figure>
+    {% asset_img manchester_code.svg %}
+    <figcaption>Manchester Code generated from inverted and non-inverted PWM signal.</figcaption>
+</figure>
+
+We have to prepare two registers for the value of `TCCR2A` instead of `OCR2B`.
+Those would be:
+
+``` c
+    uint8_t hi = _BV(COM0B1) | _BV(WGM01) | _BV(WGM00);                 // non-inverting waveform
+    uint8_t lo = _BV(COM0B1) | _BV(COM0B0) | _BV(WGM01) | _BV(WGM00);   // inverting waveform
+    OCR2A = 9;                                                          // count 10 clock cycles
+    OCR2B = 4;                                                          // 50% duty cycle
+```
+
+And in AVR assembly `%[OCR2B]` needs to be replaced with `%[TCCR2A]`.
+That's all.
 
 
 
 ## Conclusion ##
 
-The assembly provided here is not faster or smaller than the assembly of [Just in Time][1].
+The AVR assembly provided here is not faster or smaller than the AVR assembly of [Just in Time][1].
 Actually it must not be faster as it has to be cycle accurate.
-I am pretty sure someone more experienced can do this with less code.
-But the assembly is much easier to understand.
+But the AVR assembly is much easier to understand as I explained the steps taken during its creation in detail.
 This benefits me especially, as I am new to writing assembly in general and for AVR in particular.
-The generated waveform can be changed easily without rewriting the entire assembly.
-???? With a slight modification to the assembly it is also possible to generate manchester code. ????
 
+The generated waveform can be changed easily without rewriting the entire AVR assembly.
+Something that cannot be achieved with bit banging, where you have to write different code for different bit timings.
+With the PWM approach we can even produce Manchester code.
 
 Of course the simplicity comes with some cost.
 Using the hardware capabilities binds some hardware resources, a Timer/Counter in this case.
-?????? This also limits the pins that can be used to one PWM pin as the other PWM pin that is attached to the Timer/Counter is just the inverted output.????
-
+This also limits the pins that can be used to just one (1) of the TCs PWM pin (except for TC1).
 
 
 
 ## Follow up ##
 
-I am pretty sure it is possible to transmit data even faster as 10 clock cycles.
-[Just in Time][1] was able to bit bang the data which requires to toggle the pin twice a bit.
-the fast PWM approach only needs to set a register once per bit.
-It seems obvious that 9 clock cycles per bit should be feasible.
+For fun and profit I'd like to see how fast we can transmit serial data over a single pin.
+[Just in Time][1] was able to transmit the data at 10 clock cycles per bit using bit banging, which requires to toggle the pin twice a bit.
+The Fast PWM Mode approach only needs to set a register once per bit.
+As long as we stick to TC0, we can replace the `STS` instructions with `OUT` instructions and have saved one clock cycle per bit already.
 That is why in the next article I will explore how fast we can get with serial data transmission.
 
 
@@ -334,8 +488,8 @@ During the development I stumbled over weird compiler optimizations.
 Every time the named inputs used the same value, they got mapped to the same physical register.
 This is clearly not what I wanted because one named input gets modified while the other does not.
 I reached out to the [avr-gcc mailing list][6] because I did not understand why it was happening and I thought it was a defect in the compiler optimization as there was no issue when compiling with `-O0`.
-In the [thread][7] the nice people Joseph C. Sible and David Brown helped me to understand that values are passed in by value and there need not be a correlation between the C variables and registers in the assembly.
-Using variables as input AND output helps establish some barrier between the values and registers such that they don't get mixed up.
+In the [thread][7] the nice people Joseph C. Sible and David Brown helped me to understand that values are passed in by value and there is no requirement for a correlation between the C variables and registers in the AVR assembly.
+Using variables as input AND output helps to establish some barrier between the values and registers, so that they don't get mixed up.
 
 
 [1]: https://rurandom.org/justintime/w/Driving_the_WS2811_at_800_kHz_with_an_8_MHz_AVR
@@ -353,62 +507,5 @@ Using variables as input AND output helps establish some barrier between the val
 [D]: https://cdn.instructables.com/ORIG/FW0/YN1X/IHDUL683/FW0YN1XIHDUL683.pdf
 [E]: https://cdn-shop.adafruit.com/product-files/1138/SK6812+LED+datasheet+.pdf
 [F]: https://cdn-shop.adafruit.com/product-files/2757/p2757_SK6812RGBW_REV01.pdf
-
-
-
-### Header 3 (; keep two spaces to top) ###
-
-
-Separating paragraphs. Paragraph 1.
-
-Paragraph 2.
-
-
-[Link](http://example.com/)
-
-
-** Strong **
-
-
-_ Emphasized _ 
-
-
-~~Strike through~~ (must not have a gap!)
-
-
-Unordered list:
-* Item 1
-* Item 2
-
-    with second paragraph
-* Item 3
-        with code block
-* Item 4
-* Item 5
-
-
-Inline code: `printf("%d\n", 42)`
-
-
-Code block (without any syntax):
-    #include <stdio.h>
-    #include <string.h>
-
-
-Code syntax block:
-``` objc title http://kwasi-ich.de kwasi-ich
-[rectangle setX: 10 y: 10 width: 20 height: 20];
-```
-supports bahs, objc, js, css and so on
-
-
-Image: ![img](image.png)
-
-Image: ![img](/images/dummy2.png)
-
-Image: {% asset_img image.png %}
-
-Image: {% img /images/dummy2.png %}
-
-
-Asset path: {% asset_path image.png %}
+[G]: https://www.arduino.cc/en/Tutorial/SecretsOfArduinoPWM
+[H]: https://en.wikipedia.org/wiki/Manchester_code

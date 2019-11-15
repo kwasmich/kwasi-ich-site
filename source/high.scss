@@ -1,0 +1,25 @@
+figure.highlight {
+    // &.c,
+    // &.avrasm {
+        //color: red !important;
+
+        .comment { color: #666; }
+        .keyword { color: #FFF; }
+        .number  { color: #B66; }
+        .symbol  { color: #BB6; }
+    // }
+
+    table {
+        background-color: transparent;
+        width: 100%;
+
+        td.gutter {
+            display: none;
+        }
+
+        td.code {
+            text-align: left;
+            padding: 0;
+        }
+    }
+}

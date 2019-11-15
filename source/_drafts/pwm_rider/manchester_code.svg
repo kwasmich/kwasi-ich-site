@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" style="clip-rule:evenodd;fill-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5" version="1.1" viewBox="0 0 720 200" height="200" width="720">
+<rect style="fill:#0f0;fill-opacity:0.5" height="20" width="640" y="70" x="80"/>
+<rect style="fill:#f0f;fill-opacity:0.5" height="20" width="640" y="20" x="80"/>
+<path style="fill:none;stroke:#fff;stroke-width:2px" d="m 80,40 h 20 v -20 H 120 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20"/>
+<path style="fill:none;stroke:#fff;stroke-width:2px" d="m 80,70 h 20 v 20 H 120 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20"/>
+<rect style="fill:#0f0;fill-opacity:0.5" height="20" width="80" y="120" x="80"/>
+<rect style="fill:#f0f;fill-opacity:0.5" height="20" width="240" y="120" x="160"/>
+<rect style="fill:#0f0;fill-opacity:0.5" height="20" width="80" y="120" x="400"/>
+<rect style="fill:#0f0;fill-opacity:0.5" height="20" width="160" y="120" x="520"/>
+<rect style="fill:#f0f;fill-opacity:0.5" height="20" width="40" y="120" x="480"/>
+<rect style="fill:#f0f;fill-opacity:0.5" height="20" width="40" y="120" x="680"/>
+<path style="fill:none;stroke:#fff;stroke-width:2px" d="m 80,120 h 20 v 20 H 120 v -20 h 20 v 20 h 40 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 40 v 20 h 20 v -20 h 20 v 20 h 40 v -20 h 40 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 20 v -20 h 20 v 20 h 40 v -20 h 20"/>
+<path style="fill:none;stroke:#fff;stroke-width:0.25px" d="M 120,-0 V 200 M 160,-0 V 200 M 200,-0 V 200 m 40,0 V -0 m 40,0 V 200 M 320,-0 V 200 M 360,-0 V 200 M 400,-0 V 200 m 40,0 V -0 m 40,0 V 200 M 520,-0 V 200 M 560,-0 V 200 M 600,-0 V 200 m 40,0 V -0 m 40,0 V 200"/>
+<text style="font-size:24px;font-family:sans-serif;fill:#fff" y="180" x="93.5">1<tspan style="font-family:sans-serif" y="180 180 180 180 180 180 180 180 180 180 180 180 180 180 180" x="132.226 172.694 213.161 253.629 294.09601 334.564 375.03201 415.49899 454.186 494.65399 535.12097 573.80798 612.49402 651.17999 691.64801">100000011011110</tspan></text>
+<text y="37.5" x="71" style="font-size:18px;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#fff;fill-opacity:1;stroke:none">
+<tspan style="font-size:18px;font-family:sans-serif;text-align:end;text-anchor:end" y="37.5" x="71">Normal</tspan>
+<tspan style="font-size:18px;font-family:sans-serif;text-align:end;text-anchor:end" y="86.5" x="71">Inverted</tspan>
+<tspan style="font-size:18px;font-family:sans-serif;text-align:end;text-anchor:end" y="136" x="71">Output</tspan>
+</text>
+</svg>
