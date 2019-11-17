@@ -454,6 +454,15 @@ And in AVR assembly `%[OCR2B]` needs to be replaced with `%[TCCR2A]`.
 That's all.
 
 
+### Get the code ###
+
+The source code can be found in my [PWM Serial Out][I] repository on GitHub.
+
+Please notice that this is __NOT__ a ready to use library.
+Minor adaptations have to be done to the surrounding code.
+Especially the reduction of the MCU clock speed by a factor of 16 will prevent a successful communication with NeoPixel LEDs.
+
+
 
 ## Conclusion ##
 
@@ -509,3 +518,4 @@ Using variables as input AND output helps to establish some barrier between the 
 [F]: https://cdn-shop.adafruit.com/product-files/2757/p2757_SK6812RGBW_REV01.pdf
 [G]: https://www.arduino.cc/en/Tutorial/SecretsOfArduinoPWM
 [H]: https://en.wikipedia.org/wiki/Manchester_code
+[I]: https://github.com/kwasmich/PWMSerialOut
